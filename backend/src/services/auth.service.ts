@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { signAccessToken, signRefreshToken, verifyRefreshToken, normalizeEmail } from '../utils/auth';
+import { createRefreshTokenForUser, findRefreshToken, revokeRefreshTokenById } from './refresh.service';
+import { mapPrismaError } from '../utils/prismaErrors';
 
 const prisma = new PrismaClient();
 
@@ -14,8 +16,14 @@ interface SignupInput {
 export async function signup(input: SignupInput) {
   const email = normalizeEmail(input.email);
   // check existing by email
-  const existing = await prisma.sysUser.findUnique({ where: { email } });
-  if (existing) throw new Error('Email already in use');
+  try {
+    const existing = await prisma.sysUser.findUnique({ where: { email } });
+    if (existing) throw new Error('Email already in use');
+  } catch (err: any) {
+    const mapped = mapPrismaError(err);
+    if (mapped) throw Object.assign(new Error(mapped.message), { details: mapped.details });
+    throw err;
+  }
 
   const hashed = await bcrypt.hash(input.password, 10);
   // determine if this is the first user
@@ -23,17 +31,25 @@ export async function signup(input: SignupInput) {
   const isFirst = count === 0;
 
   // create user via ORM; first user is_active = true, others default to false
-  const user = await prisma.sysUser.create({
-    data: {
-      first_name: input.firstName,
-      last_name: input.lastName,
-      email,
-      password: hashed,
-      is_active: isFirst,
-    },
-  });
+  let user: any;
+  try {
+    user = await prisma.sysUser.create({
+      data: {
+        first_name: input.firstName,
+        last_name: input.lastName,
+        email,
+        password: hashed,
+        is_active: isFirst,
+      },
+    });
+  } catch (err: any) {
+    const mapped = mapPrismaError(err);
+    if (mapped) throw Object.assign(new Error(mapped.message), { details: mapped.details });
+    throw err;
+  }
   const accessToken = signAccessToken({ userId: user.id, email: user.email });
-  const refreshToken = signRefreshToken({ userId: user.id, email: user.email });
+  // persist refresh token in DB
+  const refreshToken = await createRefreshTokenForUser(user.id);
 
   // remove sensitive fields before returning
   // note: keep only minimal user fields
@@ -60,7 +76,7 @@ export async function signin({ email, password }: { email: string; password: str
   if (!ok) throw new Error('Invalid credentials');
 
   const accessToken = signAccessToken({ userId: user.id, email: user.email });
-  const refreshToken = signRefreshToken({ userId: user.id, email: user.email });
+  const refreshToken = await createRefreshTokenForUser(user.id);
 
   const safeUser = {
     id: user.id,
@@ -77,9 +93,18 @@ export async function signin({ email, password }: { email: string; password: str
 export async function refresh(token: string) {
   if (!token) throw new Error('No refresh token provided');
   const payload = verifyRefreshToken(token);
+  // ensure token exists and is not revoked
+  const stored = await findRefreshToken(token);
+  if (!stored || stored.revoked) throw new Error('Invalid or revoked refresh token');
   const user = await prisma.sysUser.findUnique({ where: { id: payload.userId } });
   if (!user) throw new Error('Invalid refresh token');
+  // rotate tokens: revoke old and create a new one
+  try {
+    await revokeRefreshTokenById(stored.id);
+  } catch (e) {
+    // not critical if revoke fails
+  }
+  const newRefresh = await createRefreshTokenForUser(user.id);
   const accessToken = signAccessToken({ userId: user.id, email: user.email });
-  const refreshToken = signRefreshToken({ userId: user.id, email: user.email });
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken: newRefresh };
 }

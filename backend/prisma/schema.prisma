@@ -15,4 +15,16 @@ model SysUser {
   password   String
   is_active  Boolean  @default(false)
   createdAt  DateTime @default(now())
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  userId     String
+  user       SysUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revoked    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime?
+  @@index([userId])
 }

@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { notifyError, notifySuccess } from '@/lib/notify';
 
 const signinSchema = z.object({
-  email: z.string().email('Enter a valid email'),
+  email: z.string().trim().toLowerCase().email('Enter a valid email'),
   password: z.string().min(1, 'Password is required'),
 });
 
