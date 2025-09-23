@@ -7,23 +7,21 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Database, Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import * as projectService from '@/services/project';
+import { z } from 'zod';
+import { notifyError, notifySuccess } from '@/lib/notify';
 
 const SetupProject = () => {
   const navigate = useNavigate();
   const [projectName, setProjectName] = useState("");
-  const [projectSlug, setProjectSlug] = useState("");
   const [enableRoles, setEnableRoles] = useState(false);
   const [roles, setRoles] = useState([
-    { name: "admin", description: "Full access to all resources" },
-    { name: "developer", description: "Can manage tables and functions" },
-    { name: "viewer", description: "Read-only access" }
+    { name: "admin", description: "Full administrative access to all API endpoints" },
+    { name: "user", description: "Limited access to specific API endpoints" }
   ]);
 
   const handleProjectNameChange = (value: string) => {
     setProjectName(value);
-    // Auto-generate slug
-    const slug = value.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-    setProjectSlug(slug);
   };
 
   const addRole = () => {
@@ -58,30 +56,15 @@ const SetupProject = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="projectName">Project name</Label>
-                <Input 
-                  id="projectName" 
-                  value={projectName}
-                  onChange={(e) => handleProjectNameChange(e.target.value)}
-                  placeholder="My API Project"
-                  className="w-full"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="projectSlug">Project slug</Label>
-                <Input 
-                  id="projectSlug" 
-                  value={projectSlug}
-                  onChange={(e) => setProjectSlug(e.target.value)}
-                  placeholder="my-api-project"
-                  className="w-full"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Used in your API URL: https://{projectSlug || 'project-slug'}.api.com
-                </p>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="projectName">Project name</Label>
+              <Input 
+                id="projectName" 
+                value={projectName}
+                onChange={(e) => handleProjectNameChange(e.target.value)}
+                placeholder="My API Project"
+                className="w-full"
+              />
             </div>
 
             <div className="space-y-4">
@@ -89,7 +72,7 @@ const SetupProject = () => {
                 <div className="space-y-1">
                   <Label htmlFor="enableRoles">Enable role management</Label>
                   <p className="text-sm text-muted-foreground">
-                    Enable role management (Row-Level Security later)
+                    Control API endpoint access with user roles
                   </p>
                 </div>
                 <Switch 
@@ -109,7 +92,7 @@ const SetupProject = () => {
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Add role names (e.g. admin, developer, viewer)
+                    Define roles to control API endpoint access levels
                   </p>
                   
                   <div className="space-y-3">
@@ -147,9 +130,32 @@ const SetupProject = () => {
               Cancel
             </Button>
             <Button className="px-8" onClick={() => {
-              // demo: pretend to create project then navigate to dashboard
-              // in a real flow we'd call an API and wait for success
-              navigate('/dashboard');
+              // validate and call create project API
+              const schema = z.object({
+                name: z.string().trim().min(1, 'Project name is required'),
+                enable_roles: z.boolean().optional(),
+                roles: z.array(z.object({ name: z.string().min(1), description: z.string().optional() })).optional(),
+                is_protected: z.boolean().optional(),
+              });
+              const parsed = schema.safeParse({ name: projectName, enable_roles: enableRoles, roles, is_protected: false });
+              if (!parsed.success) {
+                const first = parsed.error.errors[0];
+                notifyError(first?.message || 'Validation error');
+                return;
+              }
+              (async () => {
+                try {
+                  const res = await projectService.createProject({ name: projectName, enable_roles: enableRoles, roles, is_protected: false });
+                  notifySuccess('Project created');
+                  navigate('/dashboard');
+                } catch (err: any) {
+                  if (err?.details && typeof err.details === 'object') {
+                    notifyError(Object.values(err.details).map((d: any) => d.message || d).join(', '));
+                  } else {
+                    notifyError(err?.message || 'Failed to create project');
+                  }
+                }
+              })();
             }}>
               Create project
             </Button>

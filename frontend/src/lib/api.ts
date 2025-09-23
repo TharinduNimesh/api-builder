@@ -1,12 +1,19 @@
+import { getAccessToken } from '@/lib/auth';
+
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
 
 export type ApiError = { status?: string; message?: string; details?: any };
 
 export async function apiFetch(path: string, opts: RequestInit = {}) {
   const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
+  const token = getAccessToken();
   const config: RequestInit = {
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(opts.headers || {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     ...opts,
   };
 

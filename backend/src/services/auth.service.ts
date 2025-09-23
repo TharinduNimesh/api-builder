@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { signAccessToken, signRefreshToken, verifyRefreshToken, normalizeEmail } from '../utils/auth';
 import { createRefreshTokenForUser, findRefreshToken, revokeRefreshTokenById } from './refresh.service';
 import { mapPrismaError } from '../utils/prismaErrors';
+import * as projectService from './project.service';
 
 const prisma = new PrismaClient();
 
@@ -87,7 +88,11 @@ export async function signin({ email, password }: { email: string; password: str
     createdAt: user.createdAt,
   };
 
-  return { user: safeUser, accessToken, refreshToken };
+  // indicate whether a SysProject exists in the system
+  const project = await projectService.getAnyProject();
+  const projectExists = !!project;
+
+  return { user: safeUser, accessToken, refreshToken, projectExists };
 }
 
 export async function refresh(token: string) {

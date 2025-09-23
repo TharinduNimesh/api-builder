@@ -15,10 +15,11 @@ model SysUser {
   password   String
   is_active  Boolean  @default(false)
   createdAt  DateTime @default(now())
-  refreshTokens RefreshToken[]
+  refreshTokens SysRefreshToken[]
+  projects   SysProject[]
 }
 
-model RefreshToken {
+model SysRefreshToken {
   id         String   @id @default(cuid())
   token      String   @unique
   userId     String
@@ -27,4 +28,17 @@ model RefreshToken {
   createdAt  DateTime @default(now())
   expiresAt  DateTime?
   @@index([userId])
+}
+
+model SysProject {
+  id          String   @id @default(cuid())
+  name        String
+  createdById String
+  createdBy   SysUser  @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  enable_roles Boolean @default(false)
+  roles       Json?    // array of { name, description }
+  is_protected Boolean @default(false)
+  api_key     String?  @unique
+  createdAt   DateTime @default(now())
+  @@index([createdById])
 }

@@ -26,7 +26,7 @@ export async function signin(req: Request, res: Response) {
     if (result.refreshToken) {
       res.cookie('refreshToken', result.refreshToken, refreshCookieOptions);
     }
-    return res.json({ status: 'ok', accessToken: result.accessToken, user: result.user });
+    return res.json({ status: 'ok', accessToken: result.accessToken, user: result.user, projectExists: !!result.projectExists });
   } catch (err: unknown) {
     const e: any = err;
     const details = e?.issues || undefined;

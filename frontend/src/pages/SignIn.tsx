@@ -89,7 +89,12 @@ const SignIn = () => {
                   notifyError('Account not active. Please wait for activation.');
                 } else {
                   notifySuccess('Welcome back!');
-                  navigate('/dashboard');
+                  // if no project exists yet, send user to setup page
+                  if (payload.projectExists === false) {
+                    navigate('/setup');
+                  } else {
+                    navigate('/dashboard');
+                  }
                 }
               } catch (err: any) {
                 if (err?.details && typeof err.details === 'object') {
