@@ -4,9 +4,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Database } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import * as auth from '@/services/auth';
+import { z } from 'zod';
+import { notifyError, notifySuccess } from '@/lib/notify';
+
+const signinSchema = z.object({
+  email: z.string().email('Enter a valid email'),
+  password: z.string().min(1, 'Password is required'),
+});
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string,string>>({});
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
@@ -32,7 +45,10 @@ const SignIn = () => {
                 type="email" 
                 placeholder="Enter your email"
                 className="w-full"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
+              {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -49,12 +65,43 @@ const SignIn = () => {
                 type="password" 
                 placeholder="Enter your password"
                 className="w-full"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
+              {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button className="w-full" size="lg" onClick={() => navigate('/dashboard')}>
-              Sign in
+            <Button className="w-full" size="lg" onClick={async () => {
+              setErrors({});
+              const parsed = signinSchema.safeParse({ email, password });
+              if (!parsed.success) {
+                const fieldErrors: Record<string,string> = {};
+                parsed.error.errors.forEach(e => { if (e.path[0]) fieldErrors[e.path[0] as string] = e.message });
+                setErrors(fieldErrors);
+                return;
+              }
+              setLoading(true);
+              try {
+                const payload = await auth.signin({ email, password });
+                const user = payload.user;
+                if (user && !user.is_active) {
+                  notifyError('Account not active. Please wait for activation.');
+                } else {
+                  notifySuccess('Welcome back!');
+                  navigate('/dashboard');
+                }
+              } catch (err: any) {
+                if (err?.details && typeof err.details === 'object') {
+                  const fieldErrors: Record<string,string> = {};
+                  Object.entries(err.details).forEach(([k,v]) => fieldErrors[k] = String((v as any)?.message || v));
+                  setErrors(fieldErrors);
+                } else {
+                  notifyError(err?.message || err);
+                }
+              } finally { setLoading(false); }
+            }} disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign in'}
             </Button>
             <p className="text-sm text-center text-muted-foreground">
               Don't have an account?{" "}

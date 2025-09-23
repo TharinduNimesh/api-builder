@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import SetupProject from "./pages/SetupProject";
+import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from "./pages/Dashboard";
 import SQLEditor from "./pages/SQLEditor";
 import Tables from "./pages/Tables";
@@ -31,64 +32,78 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/setup" element={<SetupProject />} />
+          <Route path="/setup" element={<ProtectedRoute><SetupProject /></ProtectedRoute>} />
           
           {/* Main App Routes */}
           <Route path="/dashboard" element={
-            <SidebarProvider>
-              <div className="min-h-screen flex w-full">
-                <AppSidebar />
-                <Dashboard />
-              </div>
-            </SidebarProvider>
+            <ProtectedRoute>
+              <SidebarProvider>
+                <div className="min-h-screen flex w-full">
+                  <AppSidebar />
+                  <Dashboard />
+                </div>
+              </SidebarProvider>
+            </ProtectedRoute>
           } />
           <Route path="/sql" element={
-            <SidebarProvider>
-              <div className="min-h-screen flex w-full">
-                <AppSidebar />
-                <SQLEditor />
-              </div>
-            </SidebarProvider>
+            <ProtectedRoute>
+              <SidebarProvider>
+                <div className="min-h-screen flex w-full">
+                  <AppSidebar />
+                  <SQLEditor />
+                </div>
+              </SidebarProvider>
+            </ProtectedRoute>
           } />
           <Route path="/tables" element={
-            <SidebarProvider>
-              <div className="min-h-screen flex w-full">
-                <AppSidebar />
-                <Tables />
-              </div>
-            </SidebarProvider>
+            <ProtectedRoute>
+              <SidebarProvider>
+                <div className="min-h-screen flex w-full">
+                  <AppSidebar />
+                  <Tables />
+                </div>
+              </SidebarProvider>
+            </ProtectedRoute>
           } />
           <Route path="/functions" element={
-            <SidebarProvider>
-              <div className="min-h-screen flex w-full">
-                <AppSidebar />
-                <Functions />
-              </div>
-            </SidebarProvider>
+            <ProtectedRoute>
+              <SidebarProvider>
+                <div className="min-h-screen flex w-full">
+                  <AppSidebar />
+                  <Functions />
+                </div>
+              </SidebarProvider>
+            </ProtectedRoute>
           } />
           <Route path="/api" element={
-            <SidebarProvider>
-              <div className="min-h-screen flex w-full">
-                <AppSidebar />
-                <APIDesigner />
-              </div>
-            </SidebarProvider>
+            <ProtectedRoute>
+              <SidebarProvider>
+                <div className="min-h-screen flex w-full">
+                  <AppSidebar />
+                  <APIDesigner />
+                </div>
+              </SidebarProvider>
+            </ProtectedRoute>
           } />
           <Route path="/metrics" element={
-            <SidebarProvider>
-              <div className="min-h-screen flex w-full">
-                <AppSidebar />
-                <Metrics />
-              </div>
-            </SidebarProvider>
+            <ProtectedRoute>
+              <SidebarProvider>
+                <div className="min-h-screen flex w-full">
+                  <AppSidebar />
+                  <Metrics />
+                </div>
+              </SidebarProvider>
+            </ProtectedRoute>
           } />
           <Route path="/settings" element={
-            <SidebarProvider>
-              <div className="min-h-screen flex w-full">
-                <AppSidebar />
-                <Settings />
-              </div>
-            </SidebarProvider>
+            <ProtectedRoute>
+              <SidebarProvider>
+                <div className="min-h-screen flex w-full">
+                  <AppSidebar />
+                  <Settings />
+                </div>
+              </SidebarProvider>
+            </ProtectedRoute>
           } />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
