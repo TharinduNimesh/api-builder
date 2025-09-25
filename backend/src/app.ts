@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import authRoutes from './routes/auth.route';
 import projectRoutes from './routes/project.route';
+import userRoutes from './routes/user.route';
 // load rate limiter optionally to avoid hard dependency issues in some dev setups
 let globalLimiter: any = (req: any, res: any, next: any) => next();
 let authLimiter: any = (req: any, res: any, next: any) => next();
@@ -30,6 +31,8 @@ app.use(cors({ origin: FRONTEND, credentials: true }));
 app.use('/api/auth', authLimiter, authRoutes);
 // mount project routes
 app.use('/api/project', projectRoutes);
+// mount user routes
+app.use('/api/users', userRoutes);
 
 // Placeholder root route
 app.get('/', (req: Request, res: Response) => {

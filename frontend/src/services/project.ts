@@ -3,7 +3,8 @@ import { notifyError } from '@/lib/notify';
 
 export async function getProject() {
   try {
-    return await apiFetch('/api/project');
+    const res = await apiFetch('/api/project');
+    return res.project as any;
   } catch (err: any) {
     notifyError(err?.message || err);
     throw err;

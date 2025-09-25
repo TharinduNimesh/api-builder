@@ -15,6 +15,7 @@ import SQLEditor from "./pages/SQLEditor";
 import Tables from "./pages/Tables";
 import Functions from "./pages/Functions";
 import APIDesigner from "./pages/APIDesigner";
+import Users from "./pages/Users";
 import Metrics from "./pages/Metrics";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -81,6 +82,16 @@ const App = () => (
                 <div className="min-h-screen flex w-full">
                   <AppSidebar />
                   <APIDesigner />
+                </div>
+              </SidebarProvider>
+            </ProtectedRoute>
+          } />
+          <Route path="/users" element={
+            <ProtectedRoute>
+              <SidebarProvider>
+                <div className="min-h-screen flex w-full">
+                  <AppSidebar />
+                  <Users />
                 </div>
               </SidebarProvider>
             </ProtectedRoute>

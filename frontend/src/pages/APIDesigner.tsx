@@ -343,7 +343,7 @@ const APIDesigner = () => {
           </div>
 
           {/* Create Endpoint Card */}
-          <Card className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-700 transition-colors">
+          <Card className="border-2 border-dashed border-slate-300 dark:border-slate-700">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mb-4">
                 <Plus className="h-8 w-8 text-orange-600 dark:text-orange-400" />

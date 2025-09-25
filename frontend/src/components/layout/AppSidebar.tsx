@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Database,
@@ -12,7 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Globe,
-  Plus
+  Plus,
+  Users
 } from "lucide-react";
 
 import {
@@ -28,6 +29,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import * as projectService from '@/services/project';
 
 const mainNavItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
@@ -35,6 +37,7 @@ const mainNavItems = [
   { title: "Tables", url: "/tables", icon: Table },
   { title: "Functions", url: "/functions", icon: Zap },
   { title: "API Designer", url: "/api", icon: Map },
+  { title: "Users", url: "/users", icon: Users },
   { title: "Metrics", url: "/metrics", icon: BarChart3 },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
@@ -50,6 +53,20 @@ export function AppSidebar() {
     isActive(path)
       ? "bg-orange-500/10 text-orange-600 font-medium border-r-2 border-orange-500"
       : "text-sidebar-foreground hover:bg-orange-500/5 hover:text-orange-600";
+
+  const [project, setProject] = useState<{ name?: string } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await projectService.getProject();
+        setProject(res?.project || null);
+      } catch (e) {
+        // ignore - project may not exist yet
+        setProject(null);
+      }
+    })();
+  }, []);
 
   return (
     <Sidebar collapsible="icon">
@@ -76,10 +93,10 @@ export function AppSidebar() {
         {!isCollapsed && (
           <div className="mt-4 p-3 bg-orange-50/50 dark:bg-orange-950/20 rounded-lg border border-orange-200/50 dark:border-orange-800/50">
             <div className="space-y-2">
-              <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">My API Project</h3>
+              <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">{project?.name || 'My API Project'}</h3>
               <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
                 <Globe className="h-3 w-3" />
-                <span className="truncate">api-project.supabase.co</span>
+                <span className="truncate">{window.location.host}</span>
               </div>
             </div>
             <Button 

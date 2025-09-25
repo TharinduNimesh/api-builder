@@ -93,13 +93,13 @@ const Functions = () => {
                     className="pl-10"
                   />
                 </div>
-                <Badge variant="outline" className="hover:bg-orange-50 hover:border-orange-200 cursor-pointer">
+                <Badge variant="outline" className="cursor-pointer">
                   All Functions ({functions.length})
                 </Badge>
-                <Badge variant="outline" className="hover:bg-orange-50 hover:border-orange-200 cursor-pointer">
+                <Badge variant="outline" className="cursor-pointer">
                   Mapped ({functions.filter(f => f.mapped).length})
                 </Badge>
-                <Badge variant="outline" className="hover:bg-orange-50 hover:border-orange-200 cursor-pointer">
+                <Badge variant="outline" className="cursor-pointer">
                   Unmapped ({functions.filter(f => !f.mapped).length})
                 </Badge>
               </div>
