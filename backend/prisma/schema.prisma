@@ -17,6 +17,8 @@ model SysUser {
   createdAt  DateTime @default(now())
   refreshTokens SysRefreshToken[]
   projects   SysProject[]
+  tablesCreated SysTable[] @relation("SysTableCreatedBy")
+  tablesUpdated SysTable[] @relation("SysTableUpdatedBy")
 }
 
 model SysRefreshToken {
@@ -41,4 +43,20 @@ model SysProject {
   api_key     String?  @unique
   createdAt   DateTime @default(now())
   @@index([createdById])
+}
+
+model SysTable {
+  id          String   @id @default(cuid())
+  full_name   String   @unique // schema.name
+  schema      String   @default("public")
+  name        String
+  columns     Json?
+  createdById String
+  createdBy   SysUser  @relation("SysTableCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  updatedById String?
+  updatedBy   SysUser? @relation("SysTableUpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([createdById])
+  @@index([updatedById])
 }
