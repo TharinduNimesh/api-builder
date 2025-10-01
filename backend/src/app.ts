@@ -5,6 +5,7 @@ import authRoutes from './routes/auth.route';
 import projectRoutes from './routes/project.route';
 import userRoutes from './routes/user.route';
 import tableRoutes from './routes/table.route';
+import functionRoutes from './routes/function.route';
 // load rate limiter optionally to avoid hard dependency issues in some dev setups
 let globalLimiter: any = (req: any, res: any, next: any) => next();
 let authLimiter: any = (req: any, res: any, next: any) => next();
@@ -36,6 +37,8 @@ app.use('/api/project', projectRoutes);
 app.use('/api/users', userRoutes);
 // table management (CREATE TABLE) routes
 app.use('/api/tables', tableRoutes);
+// function management routes
+app.use('/api/functions', functionRoutes);
 
 // Placeholder root route
 app.get('/', (req: Request, res: Response) => {
