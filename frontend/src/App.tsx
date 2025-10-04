@@ -12,6 +12,8 @@ import SetupProject from "./pages/SetupProject";
 import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from "./pages/Dashboard";
 import SQLEditor from "./pages/SQLEditor";
+import SQLHistory from "./pages/SQLHistory";
+import SQLSnippets from "./pages/SQLSnippets";
 import Tables from "./pages/Tables";
 import Functions from "./pages/Functions";
 import APIDesigner from "./pages/APIDesigner";
@@ -52,6 +54,26 @@ const App = () => (
                 <div className="min-h-screen flex w-full">
                   <AppSidebar />
                   <SQLEditor />
+                </div>
+              </SidebarProvider>
+            </ProtectedRoute>
+          } />
+          <Route path="/sql/history" element={
+            <ProtectedRoute>
+              <SidebarProvider>
+                <div className="min-h-screen flex w-full">
+                  <AppSidebar />
+                  <SQLHistory />
+                </div>
+              </SidebarProvider>
+            </ProtectedRoute>
+          } />
+          <Route path="/sql/snippets" element={
+            <ProtectedRoute>
+              <SidebarProvider>
+                <div className="min-h-screen flex w-full">
+                  <AppSidebar />
+                  <SQLSnippets />
                 </div>
               </SidebarProvider>
             </ProtectedRoute>

@@ -42,13 +42,6 @@ const SQLEditor = () => {
   useEffect(() => {
     loadHistory();
     loadSnippets();
-    
-    // Check if there's a query from localStorage (clicked from history/snippets page)
-    const storedQuery = localStorage.getItem('sqlEditorQuery');
-    if (storedQuery) {
-      setSql(storedQuery);
-      localStorage.removeItem('sqlEditorQuery');
-    }
   }, []);
 
   const loadHistory = async () => {
@@ -358,6 +351,9 @@ const SQLEditor = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                                    </CardDescription>
+                </CardHeader>
+                <CardContent>
                   {loadingHistory ? (
                     <div className="flex items-center justify-center py-4">
                       <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -508,6 +504,18 @@ const SQLEditor = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+};
+
+export default SQLEditor;
+
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 };

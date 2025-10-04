@@ -21,6 +21,8 @@ model SysUser {
   tablesUpdated SysTable[] @relation("SysTableUpdatedBy")
   functionsCreated SysFunction[] @relation("SysFunctionCreatedBy")
   functionsUpdated SysFunction[] @relation("SysFunctionUpdatedBy")
+  queryHistory SysQueryHistory[]
+  sqlSnippets SysSqlSnippet[]
 }
 
 model SysRefreshToken {
@@ -79,4 +81,31 @@ model SysFunction {
   updatedAt   DateTime @updatedAt
   @@index([createdById])
   @@index([updatedById])
+}
+
+model SysQueryHistory {
+  id             String   @id @default(cuid())
+  query          String   @db.Text
+  status         String   // 'success' | 'error'
+  rowsAffected   Int?
+  executionTime  Float?   // in milliseconds
+  errorMessage   String?  @db.Text
+  userId         String
+  user           SysUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model SysSqlSnippet {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  query       String   @db.Text
+  userId      String
+  user        SysUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([userId])
+  @@unique([userId, name])
 }
