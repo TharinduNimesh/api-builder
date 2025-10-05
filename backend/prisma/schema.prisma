@@ -39,10 +39,11 @@ model SysRefreshToken {
 model SysProject {
   id          String   @id @default(cuid())
   name        String
+  description String?  @db.Text
   createdById String
   createdBy   SysUser  @relation(fields: [createdById], references: [id], onDelete: Cascade)
   enable_roles Boolean @default(false)
-  roles       Json?    // array of { name, description }
+  roles       Json?    // array of { name, description, permissions }
   is_protected Boolean @default(false)
   api_key     String?  @unique
   createdAt   DateTime @default(now())

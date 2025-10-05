@@ -60,7 +60,8 @@ export function AppSidebar() {
     (async () => {
       try {
         const res = await projectService.getProject();
-        setProject(res?.project || null);
+        // projectService.getProject() returns the project object directly
+        setProject(res || null);
       } catch (e) {
         // ignore - project may not exist yet
         setProject(null);
