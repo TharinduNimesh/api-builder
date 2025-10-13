@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, UserCheck, UserX, Crown } from "lucide-react";
+import { Users, UserCheck, UserX, Globe } from "lucide-react";
 
 interface User {
   id: string;
@@ -15,9 +15,10 @@ interface User {
 
 interface UserStatsProps {
   users: User[];
+  appUsersCount: number;
 }
 
-export function UserStats({ users }: UserStatsProps) {
+export function UserStats({ users, appUsersCount }: UserStatsProps) {
   const activeUsers = users.filter(u => u.is_active);
   const inactiveUsers = users.filter(u => !u.is_active);
 
@@ -69,11 +70,11 @@ export function UserStats({ users }: UserStatsProps) {
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Project Owners</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">1</p>
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">App Users</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{appUsersCount}</p>
             </div>
-            <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-              <Crown className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+              <Globe className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
         </CardContent>
