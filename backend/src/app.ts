@@ -8,6 +8,7 @@ import tableRoutes from './routes/table.route';
 import functionRoutes from './routes/function.route';
 import sqlRoutes from './routes/sql.route';
 import settingsRoutes from './routes/settings.route';
+import appAuthRoutes from './routes/appAuth.route';
 // load rate limiter optionally to avoid hard dependency issues in some dev setups
 let globalLimiter: any = (req: any, res: any, next: any) => next();
 let authLimiter: any = (req: any, res: any, next: any) => next();
@@ -45,6 +46,9 @@ app.use('/api/functions', functionRoutes);
 app.use('/api/sql', sqlRoutes);
 // settings routes
 app.use('/api/settings', settingsRoutes);
+
+// application user auth (public API for apps) mounted under /api/b/auth
+app.use('/api/b/auth', appAuthRoutes);
 
 // Placeholder root route
 app.get('/', (req: Request, res: Response) => {

@@ -15,6 +15,8 @@ export async function createProject(req: Request, res: Response) {
       roles: parsed.roles,
       is_protected: true, // protected by default
       createdById: user.userId,
+      signup_enabled: parsed.signup_enabled,
+      default_role: parsed.default_role,
     });
     return res.status(201).json({ status: 'ok', project });
   } catch (err: unknown) {

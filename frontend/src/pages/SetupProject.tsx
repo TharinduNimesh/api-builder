@@ -15,6 +15,8 @@ const SetupProject = () => {
   const navigate = useNavigate();
   const [projectName, setProjectName] = useState("");
   const [enableRoles, setEnableRoles] = useState(false);
+  const [signupEnabled, setSignupEnabled] = useState(false);
+  const [defaultRole, setDefaultRole] = useState<string>("");
   const [roles, setRoles] = useState([
     { name: "admin", description: "Full administrative access to all API endpoints" },
     { name: "user", description: "Limited access to specific API endpoints" }
@@ -70,6 +72,20 @@ const SetupProject = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
+                  <Label htmlFor="signupEnabled">Enable app-user signup</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Allow external application users to self-register
+                  </p>
+                </div>
+                <Switch 
+                  id="signupEnabled"
+                  checked={signupEnabled}
+                  onCheckedChange={setSignupEnabled}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
                   <Label htmlFor="enableRoles">Enable role management</Label>
                   <p className="text-sm text-muted-foreground">
                     Control API endpoint access with user roles
@@ -121,6 +137,27 @@ const SetupProject = () => {
                       </div>
                     ))}
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="defaultRole">Default role (optional)</Label>
+                    <div className="flex gap-3">
+                      <Input
+                        id="defaultRole"
+                        placeholder="e.g. user"
+                        list="roles-list"
+                        value={defaultRole}
+                        onChange={(e) => setDefaultRole(e.target.value)}
+                      />
+                      <datalist id="roles-list">
+                        {roles.filter(r => r.name).map((r, i) => (
+                          <option key={i} value={r.name} />
+                        ))}
+                      </datalist>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      If set, newly signed-up app users will be assigned this role by default.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -136,8 +173,10 @@ const SetupProject = () => {
                 enable_roles: z.boolean().optional(),
                 roles: z.array(z.object({ name: z.string().min(1), description: z.string().optional() })).optional(),
                 is_protected: z.boolean().optional(),
+                signup_enabled: z.boolean().optional(),
+                default_role: z.string().trim().min(1).optional(),
               });
-              const parsed = schema.safeParse({ name: projectName, enable_roles: enableRoles, roles, is_protected: false });
+              const parsed = schema.safeParse({ name: projectName, enable_roles: enableRoles, roles, is_protected: false, signup_enabled: signupEnabled, default_role: defaultRole || undefined });
               if (!parsed.success) {
                 const first = parsed.error.errors[0];
                 notifyError(first?.message || 'Validation error');
@@ -145,7 +184,7 @@ const SetupProject = () => {
               }
               (async () => {
                 try {
-                  const res = await projectService.createProject({ name: projectName, enable_roles: enableRoles, roles, is_protected: false });
+                  const res = await projectService.createProject({ name: projectName, enable_roles: enableRoles, roles, is_protected: false, signup_enabled: signupEnabled, default_role: defaultRole || undefined });
                   notifySuccess('Project created');
                   navigate('/dashboard');
                 } catch (err: any) {

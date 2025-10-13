@@ -11,7 +11,7 @@ export async function getProject() {
   }
 }
 
-export async function createProject(data: { name: string; enable_roles?: boolean; roles?: any[]; is_protected?: boolean }) {
+export async function createProject(data: { name: string; enable_roles?: boolean; roles?: any[]; is_protected?: boolean; signup_enabled?: boolean; default_role?: string }) {
   try {
     return await apiFetch('/api/project', { method: 'POST', body: JSON.stringify(data) });
   } catch (err: any) {

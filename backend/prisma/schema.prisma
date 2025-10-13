@@ -8,45 +8,49 @@ datasource db {
 }
 
 model SysUser {
-  id         String   @id @default(cuid())
-  first_name String
-  last_name  String
-  email      String   @unique
-  password   String
-  is_active  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  refreshTokens SysRefreshToken[]
-  projects   SysProject[]
-  tablesCreated SysTable[] @relation("SysTableCreatedBy")
-  tablesUpdated SysTable[] @relation("SysTableUpdatedBy")
-  functionsCreated SysFunction[] @relation("SysFunctionCreatedBy")
-  functionsUpdated SysFunction[] @relation("SysFunctionUpdatedBy")
-  queryHistory SysQueryHistory[]
-  sqlSnippets SysSqlSnippet[]
+  id               String            @id @default(cuid())
+  first_name       String
+  last_name        String
+  email            String            @unique
+  password         String
+  is_active        Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  refreshTokens    SysRefreshToken[]
+  projects         SysProject[]
+  tablesCreated    SysTable[]        @relation("SysTableCreatedBy")
+  tablesUpdated    SysTable[]        @relation("SysTableUpdatedBy")
+  functionsCreated SysFunction[]     @relation("SysFunctionCreatedBy")
+  functionsUpdated SysFunction[]     @relation("SysFunctionUpdatedBy")
+  queryHistory     SysQueryHistory[]
+  sqlSnippets      SysSqlSnippet[]
 }
 
 model SysRefreshToken {
-  id         String   @id @default(cuid())
-  token      String   @unique
-  userId     String
-  user       SysUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  revoked    Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  expiresAt  DateTime?
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  user      SysUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revoked   Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+
   @@index([userId])
 }
 
 model SysProject {
-  id          String   @id @default(cuid())
-  name        String
-  description String?  @db.Text
-  createdById String
-  createdBy   SysUser  @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  enable_roles Boolean @default(false)
-  roles       Json?    // array of { name, description, permissions }
-  is_protected Boolean @default(false)
-  api_key     String?  @unique
-  createdAt   DateTime @default(now())
+  id             String   @id @default(cuid())
+  name           String
+  description    String?  @db.Text
+  createdById    String
+  createdBy      SysUser  @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  enable_roles   Boolean  @default(false)
+  roles          Json? // array of { name, description, permissions }
+  signup_enabled Boolean  @default(false)
+  default_role   String?
+  is_protected   Boolean  @default(false)
+  api_key        String?  @unique
+  createdAt      DateTime @default(now())
+
   @@index([createdById])
 }
 
@@ -62,6 +66,7 @@ model SysTable {
   updatedBy   SysUser? @relation("SysTableUpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
   @@index([createdById])
   @@index([updatedById])
 }
@@ -71,29 +76,31 @@ model SysFunction {
   name        String
   schema      String   @default("public")
   full_name   String   @unique // schema.name
-  parameters  String?  // function parameters e.g. "a integer, b text"
-  return_type String?  // return type e.g. "integer", "void", "TABLE(...)"
-  definition  String?  // function body / sql
+  parameters  String? // function parameters e.g. "a integer, b text"
+  return_type String? // return type e.g. "integer", "void", "TABLE(...)"
+  definition  String? // function body / sql
   createdById String
   createdBy   SysUser  @relation("SysFunctionCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
   updatedById String?
   updatedBy   SysUser? @relation("SysFunctionUpdatedBy", fields: [updatedById], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
   @@index([createdById])
   @@index([updatedById])
 }
 
 model SysQueryHistory {
-  id             String   @id @default(cuid())
-  query          String   @db.Text
-  status         String   // 'success' | 'error'
-  rowsAffected   Int?
-  executionTime  Float?   // in milliseconds
-  errorMessage   String?  @db.Text
-  userId         String
-  user           SysUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt      DateTime @default(now())
+  id            String   @id @default(cuid())
+  query         String   @db.Text
+  status        String // 'success' | 'error'
+  rowsAffected  Int?
+  executionTime Float? // in milliseconds
+  errorMessage  String?  @db.Text
+  userId        String
+  user          SysUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+
   @@index([userId])
   @@index([createdAt])
 }
@@ -107,6 +114,43 @@ model SysSqlSnippet {
   user        SysUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  @@index([userId])
+
   @@unique([userId, name])
+  @@index([userId])
+}
+
+// Application users - separate from SysUser (API builder users)
+model AppUser {
+  id            String            @id @default(cuid())
+  firstName     String?
+  lastName      String?
+  email         String            @unique
+  roles         Json? // application-level roles
+  status        String            @default("active") // e.g. active | inactive | banned
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  auth          AppUserAuth?
+  refreshTokens AppRefreshToken[]
+}
+
+model AppUserAuth {
+  id        String    @id @default(cuid())
+  appUserId String    @unique
+  appUser   AppUser   @relation(fields: [appUserId], references: [id], onDelete: Cascade)
+  password  String
+  provider  String    @default("local")
+  createdAt DateTime  @default(now())
+  lastLogin DateTime?
+}
+
+model AppRefreshToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  appUserId String
+  appUser   AppUser   @relation(fields: [appUserId], references: [id], onDelete: Cascade)
+  revoked   Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  @@index([appUserId])
 }

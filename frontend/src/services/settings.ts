@@ -1,6 +1,6 @@
 import { apiFetch } from '@/lib/api';
-import { notifyError, notifySuccess } from '@/lib/notify';
 
+// UI notifications are handled by components; services should throw errors for callers to notify
 const BASE_URL = '/api/settings';
 
 export interface SettingsData {
@@ -11,6 +11,8 @@ export interface SettingsData {
     createdById: string;
     enable_roles: boolean;
     roles: any[];
+    signup_enabled: boolean;
+    default_role: string | null;
     is_protected: boolean;
     api_key: string | null;
     createdAt: string;
@@ -28,32 +30,21 @@ export interface SettingsData {
 
 // Get all settings (project + user profile + isOwner flag)
 export async function fetchSettings(): Promise<SettingsData> {
-  try {
-    const res = await apiFetch(`${BASE_URL}/`);
-    return {
-      project: res.project,
-      user: res.user,
-      isOwner: res.isOwner,
-    };
-  } catch (err: any) {
-    notifyError(err?.message || 'Failed to fetch settings');
-    throw err;
-  }
+  const res = await apiFetch(`${BASE_URL}/`);
+  return {
+    project: res.project,
+    user: res.user,
+    isOwner: res.isOwner,
+  };
 }
 
 // Update project information (owner only)
 export async function updateProject(data: { name: string; description?: string }) {
-  try {
-    const res = await apiFetch(`${BASE_URL}/project`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-    notifySuccess('Project updated successfully');
-    return res.project;
-  } catch (err: any) {
-    notifyError(err?.message || 'Failed to update project');
-    throw err;
-  }
+  const res = await apiFetch(`${BASE_URL}/project`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+  return res.project;
 }
 
 // Update user profile
@@ -63,56 +54,34 @@ export async function updateProfile(data: {
   email?: string;
   password?: string;
 }) {
-  try {
-    const res = await apiFetch(`${BASE_URL}/profile`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-    notifySuccess('Profile updated successfully');
-    return res.user;
-  } catch (err: any) {
-    notifyError(err?.message || 'Failed to update profile');
-    throw err;
-  }
+  const res = await apiFetch(`${BASE_URL}/profile`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+  return res.user;
 }
 
 // Update roles (owner only)
-export async function updateRoles(data: { roles: any[]; enable_roles?: boolean }) {
-  try {
-    const res = await apiFetch(`${BASE_URL}/roles`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-    notifySuccess('Roles updated successfully');
-    return res.project;
-  } catch (err: any) {
-    notifyError(err?.message || 'Failed to update roles');
-    throw err;
-  }
+export async function updateRoles(data: { roles: any[]; enable_roles?: boolean; signup_enabled?: boolean; default_role?: string | null }) {
+  const res = await apiFetch(`${BASE_URL}/roles`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+  return res.project;
 }
 
 // Reset project (owner only)
 export async function resetProject() {
-  try {
-    await apiFetch(`${BASE_URL}/reset`, {
-      method: 'POST',
-    });
-    notifySuccess('Project reset successfully');
-  } catch (err: any) {
-    notifyError(err?.message || 'Failed to reset project');
-    throw err;
-  }
+  await apiFetch(`${BASE_URL}/reset`, {
+    method: 'POST',
+  });
+  return;
 }
 
 // Delete account (owner only)
 export async function deleteAccount() {
-  try {
-    await apiFetch(`${BASE_URL}/account`, {
-      method: 'DELETE',
-    });
-    notifySuccess('Account deleted successfully');
-  } catch (err: any) {
-    notifyError(err?.message || 'Failed to delete account');
-    throw err;
-  }
+  await apiFetch(`${BASE_URL}/account`, {
+    method: 'DELETE',
+  });
+  return;
 }

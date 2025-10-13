@@ -8,43 +8,45 @@ export async function getAnyProject() {
   return prisma.sysProject.findFirst();
 }
 
-export async function createProject(input: { name: string; enable_roles?: boolean; roles?: any[]; is_protected?: boolean; createdById: string }) {
+function makeApiKey() {
+  // simpler stable apiKey generation: time-based + random hex
+  const timePart = Date.now().toString(36);
+  const rand = randomBytes(8).toString('hex');
+  return `api_${timePart}_${rand}`;
+}
+
+export async function createProject(input: { name: string; enable_roles?: boolean; roles?: any[]; is_protected?: boolean; createdById: string; signup_enabled?: boolean; default_role?: string }) {
   try {
     // enforce single project in DB
     const count = await prisma.sysProject.count();
     if (count > 0) throw new Error('Project already exists');
 
-    // generate a compact, unique apiKey that includes a time-based middle and mixed-case chars
-    const ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    const rand = (len: number) => {
-      const bytes = randomBytes(len);
-      let out = '';
-      for (let i = 0; i < bytes.length; i++) out += ALPHABET[bytes[i] % ALPHABET.length];
-      return out;
-    };
-    const randGuaranteedMixed = (len: number) => {
-      if (len < 2) return rand(len);
-      let s = '';
-      // loop until we have at least one lowercase and one uppercase char
-      do {
-        s = rand(len);
-      } while (!/[a-z]/.test(s) || !/[A-Z]/.test(s));
-      return s;
+    // Validate default_role if provided
+    const enableRoles = !!input.enable_roles;
+    const roles = Array.isArray(input.roles) ? input.roles : [];
+    if (input.default_role !== undefined && input.default_role !== null && input.default_role !== '') {
+      if (!enableRoles) throw new Error('Cannot set default_role when roles are disabled (enable_roles must be true)');
+      const roleNames = roles.map((r: any) => String(r?.name).trim());
+      if (!roleNames.includes(String(input.default_role))) {
+        throw new Error('default_role must match one of the defined role names');
+      }
+    }
+
+    const apiKey = makeApiKey();
+
+    const data: any = {
+      name: input.name,
+      description: input.name,
+      createdById: input.createdById,
+      enable_roles: enableRoles,
+      roles: roles.length ? roles : undefined,
+      is_protected: !!input.is_protected,
+      signup_enabled: !!input.signup_enabled,
+      default_role: input.default_role || null,
+      api_key: apiKey,
     };
 
-    const timePart = Date.now().toString(36); // compact time-based component (lowercase + digits)
-    const apiKey = `api_${randGuaranteedMixed(4)}${timePart}${randGuaranteedMixed(6)}`;
-
-    const project = await prisma.sysProject.create({
-      data: {
-        name: input.name,
-        createdById: input.createdById,
-        enable_roles: !!input.enable_roles,
-        roles: input.roles ? input.roles : undefined,
-        is_protected: !!input.is_protected,
-        api_key: apiKey,
-      },
-    });
+    const project = await prisma.sysProject.create({ data });
     return project;
   } catch (err: any) {
     const mapped = mapPrismaError(err);

@@ -101,19 +101,39 @@ export async function updateProfile(
 }
 
 // Update roles
-export async function updateRoles(input: { roles: any[]; enable_roles?: boolean }) {
+export async function updateRoles(input: { roles: any[]; enable_roles?: boolean; signup_enabled?: boolean; default_role?: string | null }) {
   try {
     const project = await prisma.sysProject.findFirst();
     if (!project) {
       throw new Error('Project not found');
     }
 
+    // Validate default_role against the effective roles list
+    const effectiveRoles = Array.isArray(input.roles) && input.roles.length ? input.roles : (Array.isArray(project.roles as any) ? (project.roles as any) : []);
+    const effectiveEnableRoles = input.enable_roles !== undefined ? input.enable_roles : project.enable_roles;
+
+    if (input.default_role !== undefined && input.default_role !== null && input.default_role !== '') {
+      // If roles are not enabled, it's invalid to set a default role
+      if (!effectiveEnableRoles) {
+        throw new Error('Cannot set default_role when roles are disabled (enable_roles must be true)');
+      }
+
+      const roleNames = effectiveRoles.map((r: any) => String(r?.name).trim());
+      if (!roleNames.includes(String(input.default_role))) {
+        throw new Error('default_role must match one of the defined role names');
+      }
+    }
+
+    const data: any = {
+      roles: input.roles,
+      enable_roles: effectiveEnableRoles,
+    };
+    if (typeof input.signup_enabled === 'boolean') data.signup_enabled = input.signup_enabled;
+    if (input.default_role !== undefined) data.default_role = input.default_role || null;
+
     const updated = await prisma.sysProject.update({
       where: { id: project.id },
-      data: {
-        roles: input.roles,
-        enable_roles: input.enable_roles !== undefined ? input.enable_roles : project.enable_roles,
-      },
+      data,
     });
 
     return updated;

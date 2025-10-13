@@ -57,13 +57,13 @@ export async function updateProfile(req: RequestWithUser, res: Response) {
 // Update roles (owner only)
 export async function updateRoles(req: RequestWithUser, res: Response) {
   try {
-    const { roles, enable_roles } = req.body;
+    const { roles, enable_roles, signup_enabled, default_role } = req.body;
     
     if (!Array.isArray(roles)) {
       return sendError(res, 400, 'Roles must be an array');
     }
 
-    const project = await settingsService.updateRoles({ roles, enable_roles });
+  const project = await settingsService.updateRoles({ roles, enable_roles, signup_enabled, default_role });
     return res.json({ status: 'ok', project });
   } catch (err: unknown) {
     const e: any = err;

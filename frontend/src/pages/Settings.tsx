@@ -39,6 +39,8 @@ const Settings = () => {
   const [projectDescription, setProjectDescription] = useState("");
   const [roles, setRoles] = useState<any[]>([]);
   const [enableRoles, setEnableRoles] = useState(false);
+  const [signupEnabled, setSignupEnabled] = useState(false);
+  const [defaultRole, setDefaultRole] = useState<string>("");
   
   // User profile state
   const [firstName, setFirstName] = useState("");
@@ -77,6 +79,8 @@ const Settings = () => {
         setProjectDescription(data.project.description || "");
         setRoles(data.project.roles || []);
         setEnableRoles(data.project.enable_roles);
+        setSignupEnabled(data.project.signup_enabled || false);
+        setDefaultRole(data.project.default_role || "");
       }
       
       // Set user profile data
@@ -134,6 +138,8 @@ const Settings = () => {
       await settingsService.updateRoles({
         roles,
         enable_roles: enableRoles,
+        signup_enabled: signupEnabled,
+        default_role: defaultRole || null,
       });
       notifySuccess("Roles updated successfully");
       await loadSettings();
@@ -194,6 +200,8 @@ const Settings = () => {
       await settingsService.updateRoles({
         roles: updatedRoles,
         enable_roles: enableRoles,
+        signup_enabled: signupEnabled,
+        default_role: defaultRole || null,
       });
       notifySuccess("Roles updated successfully");
       await loadSettings();
@@ -448,7 +456,27 @@ const Settings = () => {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-3">
+                      <div className="space-y-4">
+                        {/* Signup Toggle */}
+                        <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="signupEnabled" className="text-sm font-medium">Enable app-user signup</Label>
+                            <p className="text-xs text-muted-foreground">
+                              Allow external application users to self-register via API
+                            </p>
+                          </div>
+                          <Switch 
+                            id="signupEnabled"
+                            checked={signupEnabled}
+                            onCheckedChange={setSignupEnabled}
+                            disabled={!isOwner}
+                          />
+                        </div>
+
+                        <Separator />
+
+                        {/* Roles List */}
+                        <div className="space-y-3">
                         {roles.length === 0 ? (
                           <div className="text-center py-8 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
                             <Shield className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
@@ -504,10 +532,75 @@ const Settings = () => {
                             </div>
                           ))
                         )}
+                        </div>
+
+                        <Separator />
+
+                        {/* Default Role Selection */}
+                        <div className="space-y-2">
+                          <Label htmlFor="defaultRole" className="text-sm font-medium">Default role for new signups</Label>
+                          <div className="flex gap-3">
+                            <Input
+                              id="defaultRole"
+                              placeholder="Leave empty for no default role"
+                              list="roles-list-settings"
+                              value={defaultRole}
+                              onChange={(e) => setDefaultRole(e.target.value)}
+                              disabled={!isOwner}
+                              className="flex-1"
+                            />
+                            <datalist id="roles-list-settings">
+                              {roles.filter(r => r.name).map((r, i) => (
+                                <option key={i} value={r.name} />
+                              ))}
+                            </datalist>
+                            {defaultRole && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDefaultRole("")}
+                                disabled={!isOwner}
+                                className="shrink-0"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Newly signed-up app users will automatically be assigned this role. Leave empty to assign no role by default.
+                          </p>
+                        </div>
+
+                        {/* Save Button */}
+                        {isOwner && (
+                          <div className="flex items-center gap-2 pt-2">
+                            <Button 
+                              size="sm" 
+                              className="bg-orange-500 hover:bg-orange-600 text-white"
+                              onClick={handleUpdateRoles}
+                              disabled={saving}
+                            >
+                              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                              Save Changes
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={loadSettings} disabled={saving}>
+                              Cancel
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
                 )}
+
+                {/* Role Management Modal */}
+                <RoleManagementModal
+                  open={roleModalOpen}
+                  onClose={() => setRoleModalOpen(false)}
+                  onSave={handleSaveRole}
+                  role={editingRole}
+                  mode={roleModalMode}
+                />
 
                 {/* Role Management Modal */}
                 <RoleManagementModal
