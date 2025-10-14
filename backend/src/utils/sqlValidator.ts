@@ -47,6 +47,14 @@ export function validateSQL(sql: string): ValidationResult {
     errors.push(`Dangerous command detected: ${dangerousCommand}`);
   }
 
+  // 3.1 Block execution blocks and function/procedure creation explicitly
+  if (hasExecBlocks(normalizedSQL)) {
+    errors.push('Anonymous code blocks (DO $$ ... $$) are not allowed');
+  }
+  if (hasFunctionOrProcedure(normalizedSQL)) {
+    errors.push('Creating or altering functions/procedures/triggers is not allowed');
+  }
+
   // 4. Block file operations
   if (hasFileOperations(normalizedSQL)) {
     errors.push('File operations (COPY, pg_read_file, pg_ls_dir, etc.) are not allowed');
@@ -154,6 +162,31 @@ function checkDangerousCommands(sql: string): string | null {
   }
 
   return null;
+}
+
+/**
+ * Block DO $$ ... $$ anonymous code blocks
+ */
+function hasExecBlocks(sql: string): boolean {
+  return /\bdo\b\s*\$\$/gi.test(sql);
+}
+
+/**
+ * Block function/procedure/trigger creation and alteration
+ */
+function hasFunctionOrProcedure(sql: string): boolean {
+  const patterns = [
+    /\bcreate\s+function\b/gi,
+    /\balter\s+function\b/gi,
+    /\bdrop\s+function\b/gi,
+    /\bcreate\s+procedure\b/gi,
+    /\balter\s+procedure\b/gi,
+    /\bdrop\s+procedure\b/gi,
+    /\bcreate\s+trigger\b/gi,
+    /\balter\s+trigger\b/gi,
+    /\bdrop\s+trigger\b/gi,
+  ];
+  return patterns.some(p => p.test(sql));
 }
 
 /**

@@ -10,6 +10,8 @@ import sqlRoutes from './routes/sql.route';
 import settingsRoutes from './routes/settings.route';
 import appAuthRoutes from './routes/appAuth.route';
 import appUserRoutes from './routes/appUser.route';
+import endpointRoutes from './routes/endpoint.route';
+import { dynamicExecute } from './controllers/endpoint.controller';
 // load rate limiter optionally to avoid hard dependency issues in some dev setups
 let globalLimiter: any = (req: any, res: any, next: any) => next();
 let authLimiter: any = (req: any, res: any, next: any) => next();
@@ -47,12 +49,17 @@ app.use('/api/functions', functionRoutes);
 app.use('/api/sql', sqlRoutes);
 // settings routes
 app.use('/api/settings', settingsRoutes);
+// endpoints CRUD for API Designer
+app.use('/api/endpoints', endpointRoutes);
 
 // application user auth (public API for apps) mounted under /api/b/auth
 app.use('/api/b/auth', appAuthRoutes);
 
 // application user management for owners (admin actions) mounted under /api/users/app
 app.use('/api/users/app', appUserRoutes);
+
+// Dynamic API execution for designed endpoints under /api/b/*
+app.all('/api/b/*', dynamicExecute);
 
 // Placeholder root route
 app.get('/', (req: Request, res: Response) => {

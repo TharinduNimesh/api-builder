@@ -23,6 +23,7 @@ model SysUser {
   functionsUpdated SysFunction[]     @relation("SysFunctionUpdatedBy")
   queryHistory     SysQueryHistory[]
   sqlSnippets      SysSqlSnippet[]
+  endpointsCreated SysEndpoint[]     @relation("SysEndpointCreatedBy")
 }
 
 model SysRefreshToken {
@@ -117,6 +118,26 @@ model SysSqlSnippet {
 
   @@unique([userId, name])
   @@index([userId])
+}
+
+// API Designer - dynamic endpoints defined by builders
+model SysEndpoint {
+  id           String   @id @default(cuid())
+  method       String   // HTTP method: GET, POST, PUT, DELETE
+  path         String   // path under /api/b, e.g. "/get-now"
+  description  String?  @db.Text
+  sql          String   @db.Text // SQL to execute
+  params       Json?    // array of { name, in: 'path'|'query'|'body', type?: 'string'|'number'|'boolean', required?: boolean }
+  is_protected Boolean  @default(false) // if true, requires Bearer auth
+  allowed_roles Json?   // optional list of allowed AppUser roles when protected; empty or null means all roles
+  is_active    Boolean  @default(true)
+  createdById  String
+  createdBy    SysUser  @relation("SysEndpointCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([method, path])
+  @@index([path])
 }
 
 // Application users - separate from SysUser (API builder users)
