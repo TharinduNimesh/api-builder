@@ -11,7 +11,8 @@ import {
   CreateTableModal, 
   ViewRowsModal, 
   ViewColumnsModal, 
-  DeleteConfirmModal 
+  DeleteConfirmModal,
+  MapTableCRUDModal
 } from '@/components/tables';
 
 const Tables = () => {
@@ -24,6 +25,7 @@ const Tables = () => {
   const [rowsModalOpen, setRowsModalOpen] = useState(false);
   const [columnsModalOpen, setColumnsModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [mapAPIModalOpen, setMapAPIModalOpen] = useState(false);
 
   // Initial data fetch
   useEffect(() => {
@@ -41,6 +43,11 @@ const Tables = () => {
     setColumnsModalOpen(true);
   };
 
+  const handleMapAPI = (table: TableData) => {
+    setSelectedTable(table);
+    setMapAPIModalOpen(true);
+  };
+
   const handleDelete = (table: TableData) => {
     setSelectedTable(table);
     setDeleteModalOpen(true);
@@ -52,6 +59,10 @@ const Tables = () => {
 
   const handleTableDeleted = () => {
     fetchTables(true);
+  };
+
+  const handleEndpointsCreated = () => {
+    // Just close the modal, endpoints are created in API Designer
   };
 
   return (
@@ -102,6 +113,7 @@ const Tables = () => {
                   table={table}
                   onViewRows={() => handleViewRows(table)}
                   onViewColumns={() => handleViewColumns(table)}
+                  onMapAPI={() => handleMapAPI(table)}
                   onDelete={() => handleDelete(table)}
                 />
               ))}
@@ -150,6 +162,13 @@ const Tables = () => {
         open={columnsModalOpen}
         onOpenChange={setColumnsModalOpen}
         table={selectedTable}
+      />
+      
+      <MapTableCRUDModal
+        open={mapAPIModalOpen}
+        onOpenChange={setMapAPIModalOpen}
+        table={selectedTable}
+        onSuccess={handleEndpointsCreated}
       />
       
       <DeleteConfirmModal

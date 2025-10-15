@@ -16,10 +16,11 @@ interface TableCardProps {
   };
   onViewRows: () => void;
   onViewColumns: () => void;
+  onMapAPI: () => void;
   onDelete: () => void;
 }
 
-export function TableCard({ table, onViewRows, onViewColumns, onDelete }: TableCardProps) {
+export function TableCard({ table, onViewRows, onViewColumns, onMapAPI, onDelete }: TableCardProps) {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     try {
@@ -96,7 +97,7 @@ export function TableCard({ table, onViewRows, onViewColumns, onDelete }: TableC
           </div>
           
           <div className="flex gap-2">
-            <Button variant="default" size="sm" className="flex-1">
+            <Button variant="default" size="sm" className="flex-1" onClick={onMapAPI}>
               <Map className="h-4 w-4 mr-1" />
               Map to API
             </Button>
