@@ -40,7 +40,7 @@ export const SQLQueryStep = ({ sql, onSqlChange }: SQLQueryStepProps) => {
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
             <AlertCircle className="h-3 w-3 text-red-600" />
-            <span className="font-medium">Blocked:</span> System tables, file operations, dangerous commands
+            <span className="font-medium">Blocked:</span> System tables (Sys*, AppUserAuth, AppRefreshToken), file operations, dangerous commands
           </p>
         </div>
       </div>

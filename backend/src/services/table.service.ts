@@ -35,6 +35,12 @@ function validateCreateTableSql(sql: string) {
 
   const tableName = parts[parts.length - 1];
   if (/^sys/i.test(tableName)) throw new Error('Table names starting with "sys" are reserved');
+  
+  // Block creation of auth-related table names for security
+  const lowerTableName = tableName.toLowerCase();
+  if (lowerTableName === 'appuserauth' || lowerTableName === 'apprefreshtoken') {
+    throw new Error(`Table name "${tableName}" is reserved for authentication purposes`);
+  }
 
   // naive check: ensure no column definitions refer to sys* tables (look for references to sys in the body)
   const bodyMatch = normalized.match(/\([\s\S]*\)/);
@@ -42,6 +48,10 @@ function validateCreateTableSql(sql: string) {
     const body = bodyMatch[0].toLowerCase();
     if (/\b(sys[a-z0-9_]*)\b/.test(body)) {
       throw new Error('Column definitions must not reference system tables');
+    }
+    // Also block references to auth tables
+    if (/\b(appuserauth|apprefreshtoken)\b/.test(body)) {
+      throw new Error('Column definitions must not reference authentication tables (AppUserAuth, AppRefreshToken)');
     }
   }
 

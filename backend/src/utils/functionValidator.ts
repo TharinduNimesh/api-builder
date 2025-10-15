@@ -53,6 +53,27 @@ export function validateAndParseFunctionSQL(sql: string): FunctionMetadata {
     }
   }
 
+  // 4.1. Security: Block access to sensitive App* authentication tables
+  const appAuthTablePattern = /\b(from|join|into|update|delete\s+from|insert\s+into)\s+(["`]?(appuserauth|apprefreshtoken))/gi;
+  const appAuthMatches = trimmed.match(appAuthTablePattern);
+  if (appAuthMatches) {
+    throw new Error(
+      'Access to authentication tables (AppUserAuth, AppRefreshToken) is not allowed for security reasons. ' +
+      'Functions cannot query, modify, or reference sensitive authentication tables.'
+    );
+  }
+
+  // Also check for quoted identifiers for App auth tables
+  const quotedAppAuthPattern = /["'`](appuserauth|apprefreshtoken|AppUserAuth|AppRefreshToken)["'`]/gi;
+  const quotedAppAuthMatches = trimmed.match(quotedAppAuthPattern);
+  if (quotedAppAuthMatches) {
+    const tableName = quotedAppAuthMatches[0].replace(/["'`]/g, '');
+    const lowerTableName = tableName.toLowerCase();
+    if (lowerTableName === 'appuserauth' || lowerTableName === 'apprefreshtoken') {
+      throw new Error(`Access to authentication table "${tableName}" is not allowed for security reasons`);
+    }
+  }
+
   // 5. Extract function name and schema
   const functionNameMatch = trimmed.match(
     /create(?:\s+or\s+replace)?\s+function\s+([\w"]+(?:\.[\w"]+)?)\s*\(/i

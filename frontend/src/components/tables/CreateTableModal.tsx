@@ -156,7 +156,11 @@ export function CreateTableModal({ open, onOpenChange, onSuccess }: CreateTableM
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="w-1 h-1 bg-blue-600 rounded-full mt-1.5 flex-shrink-0"></div>
-                    Cannot reference system tables (Sys*) in column definitions
+                    Reserved table names: AppUserAuth, AppRefreshToken
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="w-1 h-1 bg-blue-600 rounded-full mt-1.5 flex-shrink-0"></div>
+                    Cannot reference system tables (Sys*) or auth tables in column definitions
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="w-1 h-1 bg-blue-600 rounded-full mt-1.5 flex-shrink-0"></div>

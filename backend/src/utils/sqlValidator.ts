@@ -41,6 +41,11 @@ export function validateSQL(sql: string): ValidationResult {
     errors.push('Direct access to system tables (Sys*) is not allowed');
   }
 
+  // 2.1. Block sensitive App* auth tables
+  if (hasAppAuthTableAccess(normalizedSQL)) {
+    errors.push('Direct access to authentication tables (AppUserAuth, AppRefreshToken) is not allowed for security reasons');
+  }
+
   // 3. Block dangerous commands
   const dangerousCommand = checkDangerousCommands(normalizedSQL);
   if (dangerousCommand) {
@@ -128,6 +133,20 @@ function hasSysTableAccess(sql: string): boolean {
   const patterns = [
     /\b(from|join|into|update|delete\s+from|insert\s+into)\s+(["\`]?sys\w+)/gi,
     /\b(from|join|into|update|delete\s+from|insert\s+into)\s+(["\`]?public["\`]?\.["\`]?sys\w+)/gi,
+  ];
+
+  return patterns.some(pattern => pattern.test(sql));
+}
+
+/**
+ * Check for App* authentication table access (sensitive tables)
+ */
+function hasAppAuthTableAccess(sql: string): boolean {
+  const patterns = [
+    /\b(from|join|into|update|delete\s+from|insert\s+into)\s+(["\`]?appuserauth|["\`]?apprefreshtoken)/gi,
+    /\b(from|join|into|update|delete\s+from|insert\s+into)\s+(["\`]?public["\`]?\.["\`]?(appuserauth|apprefreshtoken)["\`]?)/gi,
+    /\b(from|join|into|update|delete\s+from|insert\s+into)\s+(["\`]?"AppUserAuth"|["\`]?"AppRefreshToken")/gi,
+    /\b(from|join|into|update|delete\s+from|insert\s+into)\s+(["\`]?public["\`]?\.["\`]?("AppUserAuth"|"AppRefreshToken")["\`]?)/gi,
   ];
 
   return patterns.some(pattern => pattern.test(sql));
