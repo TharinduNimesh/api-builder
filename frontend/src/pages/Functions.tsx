@@ -313,6 +313,7 @@ const Functions = () => {
         open={mapModalOpen}
         onOpenChange={setMapModalOpen}
         functionData={selectedFunction}
+        onSuccess={handleSuccess}
       />
       
       <RunFunctionModal

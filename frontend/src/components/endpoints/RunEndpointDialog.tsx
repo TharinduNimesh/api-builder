@@ -54,14 +54,27 @@ export function RunEndpointDialog({
 
   if (!endpoint) return null;
 
-  // Extract parameters from path
-  const pathParams = endpoint.path.match(/{([^}]+)}/g)?.map(p => p.slice(1, -1)) || [];
+  // Use endpoint params if available, otherwise fall back to parsing
+  const endpointParams = endpoint.params || [];
   
-  // Parse SQL for parameters
+  // Extract parameters from path (fallback)
+  const pathParamsFromPath = endpoint.path.match(/{([^}]+)}/g)?.map(p => p.slice(1, -1)) || [];
+  
+  // Parse SQL for parameters (fallback)
   const sqlParams = endpoint.sql.match(/{([^}]+)}/g)?.map(p => p.slice(1, -1)) || [];
   
-  // Combine and deduplicate
-  const allParams = Array.from(new Set([...pathParams, ...sqlParams]));
+  // Combine all parameter names and deduplicate
+  const paramNamesFromParsing = Array.from(new Set([...pathParamsFromPath, ...sqlParams]));
+  
+  // Use params array if available, otherwise use parsed params
+  const allParams = endpointParams.length > 0 
+    ? endpointParams 
+    : paramNamesFromParsing.map(name => ({
+        name,
+        in: pathParamsFromPath.includes(name) ? 'path' as const : 'query' as const,
+        type: 'string' as const,
+        required: true
+      }));
 
   const handleRun = async () => {
     setLoading(true);
@@ -72,32 +85,32 @@ export function RunEndpointDialog({
       // Build the path with /api/b prefix and path parameters
       const apiBaseRaw = (import.meta.env.VITE_API_BASE as string) || '';
       const apiBase = apiBaseRaw.replace(/\/$/, '');
+      
       // Start with the endpoint path and replace path params
       let pathWithParams = `/api/b${endpoint.path}`;
+      
+      // Replace path parameters
+      const pathParams = allParams.filter(p => p.in === 'path');
       pathParams.forEach((param) => {
         pathWithParams = pathWithParams.replace(
-          `{${param}}`,
-          encodeURIComponent(paramValues[param] || '')
+          `{${param.name}}`,
+          encodeURIComponent(paramValues[param.name] || '')
         );
       });
 
       // Normalize duplicate slashes in the path portion
       pathWithParams = pathWithParams.replace(/([^:]\/)\//g, '$1');
 
-      // Decide on absolute origin: if VITE_API_BASE is set and looks like an origin (starts with http), use it;
-      // otherwise fallback to window.location.origin
+      // Decide on absolute origin
       const origin = apiBase && /^https?:\/\//i.test(apiBase) ? apiBase : window.location.origin;
 
-      // Final URL is origin + normalized path
-      const finalUrl = `${origin}${pathWithParams}`;
-
-      // Build query string for non-path parameters
-      const queryParams = sqlParams.filter(p => !pathParams.includes(p));
-      if (queryParams.length > 0 && endpoint.method === 'GET') {
+      // Build query string for query parameters (regardless of method)
+      const queryParams = allParams.filter(p => p.in === 'query');
+      if (queryParams.length > 0) {
         const query = new URLSearchParams(
           queryParams.reduce((acc, param) => {
-            if (paramValues[param]) {
-              acc[param] = paramValues[param];
+            if (paramValues[param.name]) {
+              acc[param.name] = paramValues[param.name];
             }
             return acc;
           }, {} as Record<string, string>)
@@ -105,20 +118,21 @@ export function RunEndpointDialog({
         if (query) pathWithParams += `?${query}`;
       }
 
-      // Build request body for POST/PUT
+      // Final URL is origin + normalized path
+      const finalUrl = `${origin}${pathWithParams}`;
+
+      // Build request body for body parameters
       let body = undefined;
-      if (['POST', 'PUT'].includes(endpoint.method)) {
-        const bodyParams = sqlParams.filter(p => !pathParams.includes(p));
-        if (bodyParams.length > 0) {
-          body = JSON.stringify(
-            bodyParams.reduce((acc, param) => {
-              if (paramValues[param]) {
-                acc[param] = paramValues[param];
-              }
-              return acc;
-            }, {} as Record<string, string>)
-          );
-        }
+      const bodyParams = allParams.filter(p => p.in === 'body');
+      if (bodyParams.length > 0) {
+        body = JSON.stringify(
+          bodyParams.reduce((acc, param) => {
+            if (paramValues[param.name]) {
+              acc[param.name] = paramValues[param.name];
+            }
+            return acc;
+          }, {} as Record<string, string>)
+        );
       }
 
       // Make the request - use centralized access token
@@ -203,21 +217,27 @@ export function RunEndpointDialog({
               </div>
               <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
                 {allParams.map((param) => (
-                  <div key={param} className="space-y-1.5">
-                    <Label htmlFor={param} className="text-sm flex items-center gap-2">
-                      <span className="font-medium">{param}</span>
+                  <div key={param.name} className="space-y-1.5">
+                    <Label htmlFor={param.name} className="text-sm flex items-center gap-2">
+                      <span className="font-medium">{param.name}</span>
                       <Badge variant="outline" className="text-xs">
-                        {pathParams.includes(param) ? 'path' : 'query/body'}
+                        {param.in}
                       </Badge>
+                      {param.type && (
+                        <Badge variant="secondary" className="text-xs">
+                          {param.type}
+                        </Badge>
+                      )}
                     </Label>
                     <Input
-                      id={param}
-                      placeholder={`Enter ${param}`}
-                      value={paramValues[param] || ''}
+                      id={param.name}
+                      placeholder={`Enter ${param.name}`}
+                      value={paramValues[param.name] || ''}
                       onChange={(e) =>
-                        setParamValues({ ...paramValues, [param]: e.target.value })
+                        setParamValues({ ...paramValues, [param.name]: e.target.value })
                       }
                       className="bg-white dark:bg-slate-900"
+                      type={param.type === 'number' ? 'number' : 'text'}
                     />
                   </div>
                 ))}
