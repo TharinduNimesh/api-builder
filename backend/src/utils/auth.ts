@@ -30,7 +30,11 @@ export function verifyRefreshToken(token: string) {
 export const refreshCookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  // For production deployments where frontend and backend are on different
+  // origins, browsers require `SameSite=None` plus `Secure` for the cookie
+  // to be accepted in cross-site requests. In development we keep `lax`
+  // to avoid dealing with HTTPS locally.
+  sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as const,
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
