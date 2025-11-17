@@ -1,21 +1,76 @@
 services:
   db:
-    image: postgres:14
-    container_name: api_builder_db
-    environment:
-      POSTGRES_DB: ${DB_NAME:-api_builder_db}
-      POSTGRES_USER: ${DB_USER:-api_builder_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    image: postgres:14-alpine
     restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: api_builder_db
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - webnet
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      PORT: 3000
+    ports:
+      - "${BACKEND_PORT}:3000"
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - webnet
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_API_BASE: ${VITE_API_BASE}
+    env_file:
+      - ./.env
+    environment:
+      PORT: 5173
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    ports:
+      - "${FRONTEND_PORT}:5173"
+    restart: unless-stopped
+    networks:
+      - webnet
+
+  nginx:
+    image: nginx:stable
+    ports:
+      - "${NGINX_PORT}:80"
+    depends_on:
+      - frontend
+      - backend
+    volumes:
+      - ./nginx:/etc/nginx/conf.d:ro
+    restart: unless-stopped
+    networks:
+      - webnet
 
 volumes:
-  db_data:
+  db-data:
+
+networks:
+  webnet:
+    driver: bridge
