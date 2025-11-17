@@ -26,6 +26,12 @@ try {
 
 const app = express();
 
+// When running behind a reverse proxy (nginx) we need to trust the proxy
+// so that `X-Forwarded-For` and related headers are respected. express-rate-limit
+// validates presence of X-Forwarded-For only when `trust proxy` is enabled.
+// Set to `1` to trust the first proxy in front of the app (nginx).
+app.set('trust proxy', 1);
+
 app.use(express.json());
 app.use(cookieParser());
 
