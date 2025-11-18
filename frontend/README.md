@@ -1,58 +1,21 @@
-# Welcome to your Lovable project
+# API Builder — Frontend
 
-## Project info
+This repository contains the frontend for API Builder, a visual API designer that makes it easy to create REST endpoints on top of a PostgreSQL database without writing server code. The UI lets users design tables, endpoints, functions, roles, and access rules — then generates the backend configuration automatically.
 
-**URL**: https://lovable.dev/projects/0b295cdc-565c-4975-869b-b599bc730b6b
+## What this app does
 
-## How can I edit this code?
+- Provides a visual interface for designing CRUD endpoints and custom API routes based on your Postgres schema.
+- Lets non-developers and developers alike create and manage APIs through a GUI instead of editing code directly.
+- Integrates with the backend service (Node + TypeScript + Prisma) which applies changes to the database and exposes the generated endpoints.
 
-There are several ways of editing your application.
+## Key features
 
-**Use Lovable**
+- Visual endpoint and function editor
+- Role-based access and project settings
+- SQL / function testing tools in the UI
+- Instant preview of generated endpoints through the backend
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0b295cdc-565c-4975-869b-b599bc730b6b) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
+## Technologies
 
 - Vite
 - TypeScript
@@ -60,14 +23,37 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## Local development (frontend)
 
-Simply open [Lovable](https://lovable.dev/projects/0b295cdc-565c-4975-869b-b599bc730b6b) and click on Share -> Publish.
+1. Install Node.js (LTS recommended) and npm.
+2. From this folder, install dependencies and start the dev server:
 
-## Can I connect a custom domain to my Lovable project?
+```cmd
+cd frontend
+npm install
+npm run dev
+```
 
-Yes, you can!
+By default Vite serves the frontend (see `FRONTEND_PORT` in the project `.env`). The frontend expects the backend API to be available — use the repository root `docker-compose.yml` to start the full stack or run the backend locally.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Running the full stack with Docker
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+This project includes a `docker-compose.yml` at the repository root that brings up Postgres, the backend, and the frontend (and nginx). To run the full stack:
+
+```cmd
+cd ..
+docker-compose up --build
+```
+
+Environment variables are defined in the repository root `.env` file. Adjust ports and credentials there as needed.
+
+## Contributing
+
+- Open an issue or submit a pull request for changes.
+- Keep UI changes focused and add a short description of the user-facing behavior.
+
+## More information
+
+See the backend folder for server implementation details and the `prisma/schema.prisma` file for the Postgres schema and Prisma models.
+
+If you'd like, I can also add a top-level `README.md` describing how frontend and backend interact, or a `.env.example` highlighting required variables.
